@@ -2,7 +2,10 @@ from app.resource import *
 
 class Login(Resource):
 
-	def post(self):
+	def post_login(self):
+
+		"""esta fucncionalidad se encarga de hacer la petición post para validar el usuario existente"""
+
 		jsonfile = request.get_json()
 		auth_token = jsonfile.get('auth_token')
 
@@ -10,54 +13,59 @@ class Login(Resource):
 			decoded = jwt.decode(auth_token, config.KEY, algorithm = 'HS256')
 		except jwt.exceptions.DecodeError:
 			responds = {
-				"status": "fail",
+				"status": 401,
 				"message": "Provide a valid auth token",
 			}			
-			return responds, 401	
+			return responds, responds['status']
+		else: 
+			email = decoded['email']
+			password = decoded['password'].encode('utf-8')
 
-		email = decoded['email']
-		password = decoded['password'].encode('utf-8')
+			query = select( [ User ] ).where( User.email == email )
+			result = db.session.execute(query)
+			user = result.fetchone()
 
-		query = select([User]).where(User.email == email)
-		result = db.session.execute(query)
-		user = result.fetchone()
 
 		if user != None and len(user) > 0:
 			if bcrypt.hashpw(password, user['password'].encode('utf-8')) == user['password'].encode('utf-8'):
+
 				responds = {
-					"status": "success",
+					"status": 200,
 					"message": "Successfully logged in",
 					"auth_token": auth_token
 				}
-				resp = make_response(responds)
-				resp.set_cookie("auth_token", auth_token)
-				return resp
+
+				response = make_response(responds)
+				response.set_cookie("auth_token", auth_token)
+
+				return response, responds['status']
+			
 			else:
 				responds = {
-				"status": "fail",
+				"status": 400,
 				"message": "Error Password User Not math",
-			}			
-			return responds, 401
+				}			
+			return responds, responds['status']		
+
 		else:
 			responds = {
-				"status": "fail",
+				"status": 400,
 				"message": "Provide a valid auth token",
 			}			
-			return responds, 401		
+			return responds, responds['status']		
 
 
-	def get(self):
+	def get_cookies_session(self):
 		cookies = request.cookies
-		if(cookies == {}):
+		if( cookies ==  {} ):
 			responds = {
-				"status": "success",
+				"status": 401,
 				"message": "User is not login"
 			}
-			return responds, 200
+			return responds, responds['status']		
 		else:
 			responds = {
-				"status": "success",
+				"status": 200,
 				"message": "User is logged in",
 			}			
-			return responds, 200
-
+			return responds, responds['status']	

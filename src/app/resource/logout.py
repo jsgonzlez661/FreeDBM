@@ -2,19 +2,24 @@ from app.resource import *
 
 class Logout(Resource):
 
-	def get(self):
+	def get_cookies_logout(self):
+
 		cookies = request.cookies
-		if(cookies != {}):
+
+		if( cookies  !=  {} ):
 			responds = {
-				"status": "success",
+				"status": 200,
 				"message": "Successfully logged out"
 			}
-			resp = make_response(responds)			
-			resp.set_cookie('auth_token', cookies['auth_token'], expires = 0)
-			return resp
+
+			response = make_response(responds)			
+			response.set_cookie( 'auth_token',  cookies['auth_token'],  expires = 0)
+
+			return response
 		else:
 			responds = {
-				"status": "success",
+				"status": 200,
 				"message": "User is not login"
 			}
-			return responds, 200
+			return responds, responds['status']
+			
